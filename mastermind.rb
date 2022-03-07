@@ -6,9 +6,20 @@ require 'pry-byebug'
 class Mastermind
   attr_reader :feedback, :guesses
 
+  MAX_ATTEMPTS = 12
+
   def initialize(player1_class, player2_class)
-    @codemaker = player1_class.new(self)
-    @codebreaker = player2_class.new(self)
+    puts "Type 1 to play as codemaker, 2 to play as code breaker"
+    choice = gets.chomp.to_i
+
+    if choice == 1
+      @codemaker = player1_class.new(self)
+      @codebreaker = player2_class.new(self)
+    elsif choice == 2
+      @codemaker = player2_class.new(self)
+      @codebreaker = player1_class.new(self)
+    end
+
     @guesses = []
     @feedback = []
   end
@@ -20,7 +31,6 @@ class Mastermind
       # puts "Correct: #{result[:correct_position]}, wrong: #{result[:wrong_position]}"
       @guesses.push guess
       @feedback.push feedback
-      puts @feedback.last
       print_board
     end
   end
@@ -29,7 +39,7 @@ class Mastermind
 
   def game_over?
     return false if @guesses.empty?
-    return true if @guesses.count >= 10
+    return true if @guesses.count >= MAX_ATTEMPTS
     return true if @guesses.last == @codemaker.code
 
     false
@@ -66,7 +76,8 @@ class Player
   end
 
   def make_code
-    Code.new([1, 2, 3, 4])
+    print 'Set your code: '
+    Code.new(gets.split.map(&:to_i))
   end
 
   def give_feedback(guess)
@@ -91,9 +102,8 @@ class ComputerPlayer < Player
   end
 
   def make_code
-    available_numbers = (1..6).to_a
     new_code = []
-    4.times { new_code.push(available_numbers.delete_at(rand(available_numbers.length))) }
+    4.times { new_code.push(rand(1..6)) }
     p new_code
     Code.new(new_code)
   end
@@ -109,9 +119,9 @@ class ComputerPlayer < Player
     # Remove from S any code that would not give the same response if it (the guess) were the code.
     feedback = @game.feedback.last
     current_guess = @game.guesses.last
-
     @possible_codes.filter! { |code| code.feedback(current_guess) == feedback }
 
+    # Find most optimal guess
     minimax(@all_codes, @possible_codes)
   end
 
@@ -139,14 +149,8 @@ class ComputerPlayer < Player
         highestt = lowests
       end
     end
-    binding.pry if highestt.code.empty?
     highestt
   end
-
-  def guess_score(possible_guesses, guess)
-    
-  end
-
 end
 
 # Guess class
@@ -187,7 +191,7 @@ class Code
 end
 
 # Mastermind.new(ComputerPlayer, Player).play
-Mastermind.new(ComputerPlayer, ComputerPlayer).play
+Mastermind.new(ComputerPlayer, Player).play
 
 # code = Code.new([6, 2, 2, 1])
 # guess = Code.new([1, 1, 2, 2])
