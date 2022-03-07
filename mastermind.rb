@@ -9,7 +9,7 @@ class Mastermind
   MAX_ATTEMPTS = 12
 
   def initialize(player1_class, player2_class)
-    puts "Type 1 to play as codemaker, 2 to play as code breaker"
+    puts 'Type 1 to play as codemaker, 2 to play as code breaker'
     choice = gets.chomp.to_i
 
     if choice == 1
