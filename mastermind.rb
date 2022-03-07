@@ -127,9 +127,7 @@ class ComputerPlayer < Player
 
       possible_guesses.each do |sguess|
         feedback = sguess.feedback(tguess)
-        # deleted = possible_guesses.filter { |curr_guess| curr_guess.feedback(tguess) != feedback }.length
         deleted = possible_guesses.count { |curr_guess| curr_guess.feedback(tguess) != feedback }
-        # binding.pry
         if deleted <= smin
           smin = deleted
           lowests = sguess
@@ -143,6 +141,9 @@ class ComputerPlayer < Player
     end
     binding.pry if highestt.code.empty?
     highestt
+  end
+
+  def guess_score(possible_guesses, guess)
     
   end
 
@@ -157,33 +158,26 @@ class Code
   end
 
   def feedback(guess)
-    guess = guess.code
-    temp_guess = []
-    temp_code = []
+    wrong_guess_pegs = []
+    wrong_answer_pegs = []
+    result = { correct_position: 0, wrong_position: 0 }
 
-    # Calculate correct positions
-    correct_position = 0
-    @code.each_with_index do |val, i|
-      if @code[i] == guess[i]
-        correct_position += 1
+    @code.zip(guess.code).each do |answer_peg, guess_peg|
+      if guess_peg == answer_peg
+        result[:correct_position] += 1
       else
-        temp_code.push(val)
-        temp_guess.push(guess[i])
+        wrong_guess_pegs.push(guess_peg)
+        wrong_answer_pegs.push(answer_peg)
       end
     end
 
-    # Calculate wrong positions
-    wrong_position = 0
-    until temp_guess.empty?
-      val = temp_guess.pop
-      if temp_code.include? val
-        wrong_position += 1
-        temp_code.delete(val)
+    wrong_guess_pegs.each do |peg|
+      if wrong_answer_pegs.include?(peg)
+        wrong_answer_pegs.delete(peg)
+        result[:wrong_position] += 1
       end
     end
 
-    result = { correct_position: correct_position, wrong_position: wrong_position }
-    # puts "Code: #{@code}, Guess: #{guess}, Feedback: #{result}"
     result
   end
 
