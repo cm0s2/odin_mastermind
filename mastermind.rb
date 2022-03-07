@@ -1,5 +1,7 @@
 # frozen-string-literal: true
 
+require 'pry-byebug'
+
 # Mastermind class
 class Mastermind
   attr_reader :feedback, :guesses
@@ -14,7 +16,6 @@ class Mastermind
   def play
     until game_over?
       guess = @codebreaker.make_guess
-      puts guess
       feedback = @codemaker.give_feedback(guess)
       # puts "Correct: #{result[:correct_position]}, wrong: #{result[:wrong_position]}"
       @guesses.push guess
@@ -78,6 +79,7 @@ class ComputerPlayer < Player
   def initialize(game)
     super(game)
     @possible_codes = []
+    @all_codes = []
   end
 
   def generate_possible_codes
@@ -99,6 +101,7 @@ class ComputerPlayer < Player
   def make_guess
     # Create the set S of 1,296 possible codes (1111, 1112 ... 6665, 6666)
     @possible_codes = generate_possible_codes if @possible_codes.empty?
+    @all_codes = @possible_codes.clone if @all_codes.empty?
 
     # Start with initial guess 1122
     return Code.new([1, 1, 2, 2]) if @game.guesses.length.zero?
@@ -106,19 +109,43 @@ class ComputerPlayer < Player
     # Remove from S any code that would not give the same response if it (the guess) were the code.
     feedback = @game.feedback.last
     current_guess = @game.guesses.last
-    puts "Current guess: #{current_guess.code}"
 
     @possible_codes.filter! { |code| code.feedback(current_guess) == feedback }
-    p "Feedback: #{feedback}"
 
-    puts "possible codes length: #{@possible_codes.length}"
-
-    print 'Make your guess: '
-    Code.new(gets.split.map(&:to_i))
+    minimax(@all_codes, @possible_codes)
   end
 
-  def minimax
+  def minimax(all_guesses, possible_guesses)
+    return possible_guesses.first if possible_guesses.length == 1
+
+    tmax = 0
+    highestt = possible_guesses.first
+
+    all_guesses.each_with_index do |tguess, index|
+      smin = possible_guesses.length
+      lowests = possible_guesses.first
+
+      possible_guesses.each do |sguess|
+        feedback = sguess.feedback(tguess)
+        # deleted = possible_guesses.filter { |curr_guess| curr_guess.feedback(tguess) != feedback }.length
+        deleted = possible_guesses.count { |curr_guess| curr_guess.feedback(tguess) != feedback }
+        # binding.pry
+        if deleted <= smin
+          smin = deleted
+          lowests = sguess
+        end
+      end
+      puts "Max: #{tmax}, index: #{index}, possible_guesses: #{possible_guesses.length}"
+      if smin > tmax
+        tmax = smin
+        highestt = lowests
+      end
+    end
+    binding.pry if highestt.code.empty?
+    highestt
+    
   end
+
 end
 
 # Guess class
